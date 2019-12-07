@@ -17,7 +17,7 @@ One 4.3 GB partition
 ## Network specification
 Static IP 192.168.56.101/24
 ssh listens on port 222
-apache2 lesten to ports: 80 (HTTP) and 443 (HTTPS)
+apache2 listens to ports: 80 (HTTP) and 443 (HTTPS)
 
 ## User management
 root - root user
@@ -42,7 +42,7 @@ To have all the currencies updated run:
 apt -y update
 apt -y upgrade
 
-apt-get install -y sudo net-tools iptables-persistent fail2ban sendmail apache2 cron vim 
+apt-get install -y sudo net-tools iptables-persistent fail2ban sendmail apache2 cron vim ufw
 ```
 
 ## Configure SUDO
@@ -309,8 +309,6 @@ sudo nano /etc/fail2ban/jail.local
 sudo nano/etc/cron.d/packages.sh
 ```
 ```
-sudo apt-get -y update > /var/log/update_script.log && sudo apt-get -y upgrade >> /var/log/update_script.log
-
 sudo nano /etc/cron.d/survey.sh
 ```
 
@@ -328,5 +326,99 @@ crontab -e
 @reboot /etc/cron.d/packages.sh
 0 0 * * * /etc/cron.d/survey.sh
 ```
+
+## Port scan protection
+
+portsentry, test from host with 
+```
+nmap [vm-IP] 
+and 
+nmap -Pn [vm-IP]
+```
+After each test (they are long), check the file /etc/hosts.deny for the host IP (it should have been added by portsentry), remove it, and reboot, or else you won't be able to ssh into the vm from the host.
+
+## Stopping useless services
+```
+sudo service --status-all
+```
+get acquainted with all of them, especially the ones that you can't stop without breaking the machine. Normally, with a Debian Server install, you've got pretty much nothing to disable here.
+
+
+## Update crontab
+
+Create a script:
+```
+sudo vim /root/scripts/update_script.sh
+```
+With the following lines:
+
+```
+#!/bin/bash
+apt update -y >> /var/log/update_script.log
+apt upgrade -y >> /var/log/update_script.log
+```
+
+Give it some permissions:
+```
+sudo chmod 755 /root/scripts/update_script.sh
+```
+And make root be the owner for automated execution:
+```
+sudo chown root /root/scripts/update_script.sh
+```
+To automate execution, we must edit the crontab file:
+```
+sudo crontab -e
+```
+To which we add the lines:
+```
+0 4 * * wed root /root/scripts/update_script.sh
+@reboot root /root/scripts/update_script.sh
+```
+
+
+## Making a script to warn of all crontab edits
+
+Create a script :
+```
+sudo vim /root/scripts/crontab_canary.sh
+```
+With the following lines :
+```
+#!/bin/bash
+
+DIFF=$(diff /etc/crontab.bak /etc/crontab)
+
+```
+```
+cat /etc/crontab > /etc/crontab.bak
+```
+```
+if [ "$DIFF" != ""] then
+    echo "crontab check: changed, notifying admin." | sudo /usr/sbin/sendmail root
+else
+    echo "crontab check: unchanged."
+fi
+```
+Give it the appropriate execution permessions:
+```
+sudo chmod 755 /root/scripts/script_crontab.sh
+```
+Make it owned by root :
+```
+sudo chown root /root/scripts/script_crontab.sh
+```
+And edit crontab by adding the following line:
+```
+0 0 * * * root /root/scripts/crontab_canary.sh
+```
+# Useful
+
+add partition of 4.2gb check with fdisk -l
+services to disable
+check DNS attack with successive hard refresh of web page sudo fail2ban-client status check when banned sudo cat /var/log/fail2ban.log sudo fail2ban-client set nginx-req-limit unbanip 10.12.10.17
+change portsentry rule in /etc/portsentry/portsentry.conf: uncomment this one KILL_ROUTE="/sbin/iptables -I INPUT -s $TARGET$ -j DROP"
+add rule in ufw for DNS : sudo ufw allow DNS
+check portsentry with nmap 10.12.1.135 when banned go to VM and do sudo iptables -L to show ban and do sudo iptables -D INPUT 1 to remove ban also remove ban in /etc/hosts.deny and do sudo service ssh restart
 
 {946e5835-c955-400e-b287-65eeb2a7a4a8}.vhd
