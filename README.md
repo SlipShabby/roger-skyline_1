@@ -1,27 +1,41 @@
-# roger-skyline_1
+# Roger-skyline_1
 roger-skyline 1
 
-# V1. Social stuff
+## V1. Social stuff
 
 Follow Slash16 on Facebook, Twitter and Linkedin.
 
-# V2. VM Installation
+## V2. VM Installation
 
 ## System specification
-Debian 10
+* Debian 10
 
 ## Hardware specification
-Disk size 8 GB
-One 4.3 GB partition
+* Disk size 8 GB
+* One 4.3 GB partition
 
 ## Network specification
-Static IP 192.168.56.101/24
-ssh listens on port 222
-apache2 listens to ports: 80 (HTTP) and 443 (HTTPS)
+* Static IP 192.168.56.101/24
+* ssh listens on port 222
+* apache2 listens to ports: 80 (HTTP) and 443 (HTTPS)
 
 ## User management
-root - root user
-aya42 - user, added to root and sudo
+* root - root user
+* aya42 - user, added to root and sudo
+
+## How to add user?
+
+```
+adduser <username> 
+```
+Make it sudo & root
+```
+adduser <username> sudo
+adduser <username> root
+```
+Also if you want to modify other users: check nano /etc/passwd & change user UID & GID to 0 
+
+## Other
 
 I used Virtual Box and downloaded the iso image of the latest [Debian10] <https://cdimage.debian.org/debian-cd/current/amd64/iso-cd>
 
@@ -42,7 +56,7 @@ To have all the currencies updated run:
 apt -y update
 apt -y upgrade
 
-apt-get install -y sudo net-tools iptables-persistent fail2ban sendmail apache2 cron vim ufw
+apt-get install -y sudo net-tools iptables-persistent fail2ban sendmail apache2 cron vim ufw nginx
 ```
 
 ## Configure SUDO
@@ -76,7 +90,7 @@ ip addr | grep 'inet'
 - to enable [network_adapter] in VM (https://cs4118.github.io/dev-guides/host-only-network.html).
 
 ```
-nano / etc / network / interfaces
+nano /etc/network/interfaces
 ```
 
 # printscreen place
@@ -95,21 +109,6 @@ iface enp0s8 inet static
     network 192.168.56.100 
     netmask 255.255.255.0
 ```
-
-## How to add user?
-
-```
-adduser <username> 
-```
-Make it sudo & root
-```
-adduser <username> sudo
-adduser <username> root
-```
-Also if you want to modify other users: check nano /etc/passwd & change user UID & GID to 0 
-
-
-- to fix the problem with pub key [access] if appeared (<https://www.digitalocean.com/community/questions/error-permission-denied-publickey-when-i-try-to-ssh>)
 
 Restart the network service to make changes effective
 
@@ -160,9 +159,14 @@ sudo service ssh restart
 ```
 Try again:
 ```
-ssh <user>@debian/IP -p 22
+ssh <user>@debian/IP -p 222
 ```
-## Setup Firewall
+
+
+- to fix the problem with pub key [access] if appeared (<https://www.digitalocean.com/community/questions/error-permission-denied-publickey-when-i-try-to-ssh>)
+
+
+    ## Setup Firewall
 ```
 sudo nano /etc/network/if-pre-up.d/iptables
 
@@ -195,13 +199,13 @@ sudo chmod +x /etc/network/if-pre-up.d/iptables
 The iptables rules are reset at each reboot. This file will allow the iptables-persistent package to load your rules every time you reboot. Modify port 22 by the port of your ssh
 
 
-## ALTERNATIVE
+## ALTERNATIVE Firewalls
 
 Add in iptables
 ```
 ## Reset tables configurations
 #
-echo "📦  Reset tables configurations"
+echo "Reset tables configurations"
 
 # Flush all rules
 echo "   -- Flush iptable rules"
@@ -219,7 +223,7 @@ iptables -X -t raw
 
 ## Trafic configurations
 #
-echo "⚙️  Trafic configurations"
+echo "Trafic configurations"
 # Block all traffic by default
 echo "   -- Block all traffic by default"
 iptables -P INPUT DROP
@@ -241,8 +245,8 @@ echo "   -- Allow output pings"
 iptables -A INPUT -p icmp --icmp-type 0 -j ACCEPT
 iptables -A OUTPUT -p icmp --icmp-type 8 -j ACCEPT
 # Allow SSH connection on 69 port
-echo "   -- Allow SSH connection on 69 port"
-iptables -A INPUT -p tcp --dport 69 -j ACCEPT
+echo "   -- Allow SSH connection on 222 port"
+iptables -A INPUT -p tcp --dport 222 -j ACCEPT
 # Allow HTTP
 echo "   -- Allow HTTP"
 iptables -t filter -A OUTPUT -p tcp --dport 80 -j ACCEPT
@@ -295,11 +299,24 @@ echo "   -- Port scanning protection"
 iptables-save > /etc/iptables/rules.v4
 ```
 
+## Alternative firewall with ufw
+
+ufw enable
+ufw default deny incoming
+ufw default allow outgoing
+ufw allow 222
+ufw allow 443
+ufw allow 80
+ufw allow 'Nginx Full'
+ufw reload
+
 ## Setup logs
 
 Creates log and send info if files were changed and protects from ddos
 ```
 sudo touch /var/log/apache2/server.log
+```
+```
 sudo nano /etc/fail2ban/jail.local
 ```
 [DEFAULT] destemail = USER@student.42.us.org sender = root@debian
@@ -326,23 +343,6 @@ crontab -e
 @reboot /etc/cron.d/packages.sh
 0 0 * * * /etc/cron.d/survey.sh
 ```
-
-## Port scan protection
-
-portsentry, test from host with 
-```
-nmap [vm-IP] 
-and 
-nmap -Pn [vm-IP]
-```
-After each test (they are long), check the file /etc/hosts.deny for the host IP (it should have been added by portsentry), remove it, and reboot, or else you won't be able to ssh into the vm from the host.
-
-## Stopping useless services
-```
-sudo service --status-all
-```
-get acquainted with all of them, especially the ones that you can't stop without breaking the machine. Normally, with a Debian Server install, you've got pretty much nothing to disable here.
-
 
 ## Update crontab
 
@@ -377,7 +377,7 @@ To which we add the lines:
 ```
 
 
-## Making a script to warn of all crontab edits
+##  Making a script to warn of all crontab edits
 
 Create a script :
 ```
@@ -412,6 +412,25 @@ And edit crontab by adding the following line:
 ```
 0 0 * * * root /root/scripts/crontab_canary.sh
 ```
+
+## Port scan protection
+
+portsentry, test from host with 
+```
+nmap [vm-IP] 
+and 
+nmap -Pn [vm-IP]
+```
+After each test (they are long), check the file /etc/hosts.deny for the host IP (it should have been added by portsentry), remove it, and reboot, or else you won't be able to ssh into the vm from the host.
+
+## Stopping useless services
+```
+sudo service --status-all
+```
+get acquainted with all of them, especially the ones that you can't stop without breaking the machine. Normally, with a Debian Server install, you've got pretty much nothing to disable here.
+
+
+
 # Useful
 
 add partition of 4.2gb check with fdisk -l
