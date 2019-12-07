@@ -441,3 +441,8 @@ add rule in ufw for DNS : sudo ufw allow DNS
 check portsentry with nmap 10.12.1.135 when banned go to VM and do sudo iptables -L to show ban and do sudo iptables -D INPUT 1 to remove ban also remove ban in /etc/hosts.deny and do sudo service ssh restart
 
 {946e5835-c955-400e-b287-65eeb2a7a4a8}.vhd
+
+
+
+______________
+
