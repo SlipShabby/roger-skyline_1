@@ -93,7 +93,6 @@ ip addr | grep 'inet'
 nano /etc/network/interfaces
 ```
 
-# printscreen place
 
 
 ```
@@ -439,6 +438,11 @@ check DNS attack with successive hard refresh of web page sudo fail2ban-client s
 change portsentry rule in /etc/portsentry/portsentry.conf: uncomment this one KILL_ROUTE="/sbin/iptables -I INPUT -s $TARGET$ -j DROP"
 add rule in ufw for DNS : sudo ufw allow DNS
 check portsentry with nmap 10.12.1.135 when banned go to VM and do sudo iptables -L to show ban and do sudo iptables -D INPUT 1 to remove ban also remove ban in /etc/hosts.deny and do sudo service ssh restart
+
+https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-ubuntu-14-04
+
+https://www.digitalocean.com/community/tutorials/how-to-use-git-hooks-to-automate-development-and-deployment-tasks
+
 
 {946e5835-c955-400e-b287-65eeb2a7a4a8}.vhd
 
