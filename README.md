@@ -93,20 +93,22 @@ ip addr | grep 'inet'
 nano /etc/network/interfaces
 ```
 
-
+https://www.youtube.com/watch?v=j1TzvIXRNqs
 
 ```
 source /etc/network/interfaces.d/*
 auto lo 
 iface lo inet loopback
-allow-hotplug enp0s3 
-iface enp0s3 inet dhcp
-allow-hotplug enp0s8 
+# allow-hotplug enp0s3 
+# iface enp0s3 inet dhcp
+auto enp0s8 
 iface enp0s8 inet static
     address 192.168.56.101/24
-    gateway 192.168.56.102
-    network 192.168.56.100 
+    #gateway 192.168.56.102
+    #network 192.168.56.100 
     netmask 255.255.255.0
+
+   # the mandatory variables are: address and netmask! 
 ```
 
 Restart the network service to make changes effective
